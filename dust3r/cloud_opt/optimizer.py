@@ -103,7 +103,19 @@ class PointCloudOptimizer(BasePCOptimizer):
         self.depth_regularize_weight = depth_regularize_weight
         if self.flow_loss_weight > 0:
             self.flow_ij, self.flow_ji, self.flow_valid_mask_i, self.flow_valid_mask_j = self.get_flow(sintel_ckpt) # (num_pairs, 2, H, W)
-            if use_self_mask: self.get_motion_mask_from_pairs(*args)
+            if use_self_mask: 
+                self.get_motion_mask_from_pairs(*args) 
+            else:
+                from pathlib import Path
+                from natsort import natsorted
+                import cv2
+                self.dynamic_masks = []
+                if isinstance(self.mask_dir, str):
+                    masks_dir = Path(self.mask_dir)
+                mask_paths = natsorted(masks_dir.glob('*.npy'))
+                for mask_path, (h, w) in zip(mask_paths, self.imshapes):
+                    mask = torch.tensor(cv2.resize(np.load(mask_path), (w, h))).to("cuda", dtype=torch.bool)
+                    self.dynamic_masks.append(mask)
             # turn off the gradient for the flow
             self.flow_ij.requires_grad_(False)
             self.flow_ji.requires_grad_(False)
