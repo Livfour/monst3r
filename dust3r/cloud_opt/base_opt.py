@@ -155,6 +155,8 @@ class BasePCOptimizer (nn.Module):
                 idx = view2['idx'][v]
                 img_pathes[idx] = view2['instance'][v]
             self.img_pathes = img_pathes
+        
+        self.mask_dir = mask_dir
 
     @property
     def n_edges(self):
